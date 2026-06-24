@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Partners L10</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #ffffff; --bg2: #f7f7f5; --bg3: #f0ede8;
+    --border: rgba(0,0,0,0.10); --border2: rgba(0,0,0,0.18);
+    --text: #1a1a1a; --text2: #555; --text3: #999;
+    --teal-bg: #e1f5ee; --teal-text: #0f6e56; --teal-border: #5dcaa5;
+    --blue-bg: #e6f1fb; --blue-text: #185fa5;
+    --green-bg: #eaf3de; --green-text: #3b6d11; --green-border: #97c459;
+    --red-bg: #fcebeb; --red-text: #a32d2d;
+    --amber-bg: #faeeda; --amber-text: #854f0b;
+    --radius: 8px; --radius-lg: 12px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.05);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1c1c1e; --bg2: #2c2c2e; --bg3: #3a3a3c;
+      --border: rgba(255,255,255,0.10); --border2: rgba(255,255,255,0.18);
+      --text: #f2f2f7; --text2: #aeaeb2; --text3: #636366;
+      --teal-bg: #04342c; --teal-text: #5dcaa5;
+      --blue-bg: #042c53; --blue-text: #85b7eb;
+      --green-bg: #173404; --green-text: #97c459; --green-border: #3b6d11;
+      --red-bg: #501313; --red-text: #f09595;
+      --amber-bg: #412402; --amber-text: #fac775;
+    }
+  }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg3); color: var(--text); font-size: 14px; min-height: 100vh; }
+
+  /* TOP NAV */
+  .topnav { background: var(--bg); border-bottom: 0.5px solid var(--border); padding: 0 24px; display: flex; align-items: center; gap: 16px; height: 52px; position: sticky; top: 0; z-index: 100; }
+  .logo { font-weight: 600; font-size: 15px; color: var(--text); letter-spacing: -0.3px; }
+  .logo span { color: var(--teal-text); }
+  .meeting-picker { display: flex; align-items: center; gap: 8px; margin-left: 16px; }
+  .meeting-picker select { font-size: 13px; border: 0.5px solid var(--border2); border-radius: var(--radius); padding: 5px 10px; background: var(--bg2); color: var(--text); cursor: pointer; }
+  .new-meeting-btn { font-size: 12px; border: 0.5px solid var(--teal-border); border-radius: var(--radius); background: var(--teal-bg); color: var(--teal-text); cursor: pointer; padding: 5px 12px; font-weight: 500; white-space: nowrap; }
+  .new-meeting-btn:hover { filter: brightness(0.95); }
+  .sync-indicator { margin-left: auto; font-size: 11px; color: var(--text3); display: flex; align-items: center; gap: 5px; }
+  .sync-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green-text); }
+  .sync-dot.syncing { background: var(--amber-text); animation: pulse 1s infinite; }
+  .sync-dot.error { background: var(--red-text); }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+  /* MAIN LAYOUT */
+  .main { max-width: 820px; margin: 0 auto; padding: 24px 16px 60px; }
+  .meeting-header { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 16px 20px; margin-bottom: 16px; display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+  .meeting-title { font-size: 20px; font-weight: 600; color: var(--text); }
+  .meeting-meta { font-size: 12px; color: var(--text3); margin-top: 3px; }
+  .meeting-notes-area { width: 100%; border: 0.5px solid var(--border); border-radius: var(--radius); padding: 7px 10px; font-size: 13px; background: var(--bg2); color: var(--text); resize: none; font-family: inherit; min-height: 36px; margin-top: 10px; }
+  .meeting-notes-area:focus { outline: none; border-color: var(--teal-border); }
+  .meeting-notes-area::placeholder { color: var(--text3); }
+
+  /* SECTIONS */
+  .section { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius-lg); margin-bottom: 12px; overflow: hidden; }
+  .sec-header { display: flex; align-items: center; gap: 10px; padding: 14px 18px; cursor: pointer; user-select: none; }
+  .sec-header:hover { background: var(--bg2); }
+  .sec-icon { font-size: 17px; color: var(--text3); flex-shrink: 0; }
+  .sec-title { font-size: 15px; font-weight: 600; flex: 1; color: var(--text); }
+  .sec-count { background: var(--bg2); border: 0.5px solid var(--border); border-radius: 20px; padding: 2px 9px; font-size: 11px; color: var(--text2); }
+  .chevron { font-size: 14px; color: var(--text3); transition: transform 0.2s; }
+  .chevron.collapsed { transform: rotate(-90deg); }
+  .sec-body { border-top: 0.5px solid var(--border); padding: 4px 18px 14px; }
+  .sec-body.hidden { display: none; }
+
+  /* CATEGORY LABELS */
+  .cat-label { font-size: 10px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.07em; padding: 10px 0 4px; }
+
+  /* ACCOUNT TAG */
+  .acct-tag { display: inline-flex; align-items: center; gap: 3px; font-size: 10px; color: var(--teal-text); background: var(--teal-bg); border-radius: 20px; padding: 1px 7px; border: 0.5px solid var(--teal-border); white-space: nowrap; }
+  .acct-tag.none { color: var(--text3); background: var(--bg2); border-color: var(--border); }
+
+  /* HEADLINES */
+  .hl-row { display: flex; align-items: flex-start; gap: 8px; padding: 7px 0; border-bottom: 0.5px solid var(--border); }
+  .hl-row:last-of-type { border-bottom: none; }
+  .hl-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--border2); flex-shrink: 0; margin-top: 7px; }
+  .hl-main { flex: 1; min-width: 0; }
+  .hl-text { color: var(--text); line-height: 1.45; font-size: 13px; }
+  .hl-meta { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; align-items: center; }
+  .hl-actions { display: flex; gap: 3px; flex-shrink: 0; }
+  .convert-btn { border: 0.5px solid var(--border2); border-radius: var(--radius); background: none; cursor: pointer; color: var(--text2); padding: 2px 7px; font-size: 11px; white-space: nowrap; font-family: inherit; }
+  .convert-btn:hover { background: var(--bg2); color: var(--text); }
+  .del-btn { border: none; background: none; cursor: pointer; color: var(--text3); padding: 2px 5px; border-radius: 4px; font-size: 14px; line-height: 1; font-family: inherit; }
+  .del-btn:hover { color: var(--red-text); background: var(--red-bg); }
+
+  /* ADD FORMS */
+  .add-area { padding: 8px 0 2px; }
+  .form-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 6px; }
+  .f-input { flex: 1; min-width: 160px; border: 0.5px solid var(--border2); border-radius: var(--radius); padding: 7px 10px; font-size: 13px; background: var(--bg2); color: var(--text); font-family: inherit; }
+  .f-input:focus { outline: none; border-color: var(--teal-border); background: var(--bg); }
+  .f-input::placeholder { color: var(--text3); }
+  .f-select { font-size: 12px; border: 0.5px solid var(--border); border-radius: var(--radius); padding: 7px 8px; background: var(--bg2); color: var(--text2); cursor: pointer; font-family: inherit; }
+  .add-btn { border: 0.5px solid var(--teal-border); border-radius: var(--radius); background: var(--teal-bg); color: var(--teal-text); cursor: pointer; padding: 7px 14px; font-size: 13px; white-space: nowrap; font-weight: 500; font-family: inherit; }
+  .add-btn:hover { filter: brightness(0.95); }
+  .saving-btn { opacity: 0.6; pointer-events: none; }
+
+  /* TO-DOS */
+  .grp-label { font-size: 11px; font-weight: 600; color: var(--text2); padding: 10px 0 3px; display: flex; align-items: center; gap: 5px; border-top: 0.5px solid var(--border); margin-top: 4px; }
+  .grp-label:first-child { border-top: none; margin-top: 0; }
+  .td-row { display: flex; align-items: flex-start; gap: 9px; padding: 8px 4px; border-bottom: 0.5px solid var(--border); }
+  .td-row:last-of-type { border-bottom: none; }
+  .td-cb { margin-top: 3px; width: 15px; height: 15px; cursor: pointer; flex-shrink: 0; accent-color: var(--teal-text); }
+  .td-main { flex: 1; min-width: 0; }
+  .td-name { font-size: 13px; color: var(--text); line-height: 1.45; }
+  .td-name.done { text-decoration: line-through; color: var(--text3); }
+  .td-meta { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 5px; align-items: center; }
+  .owner-pill { display: inline-flex; align-items: center; gap: 3px; font-size: 11px; background: var(--blue-bg); color: var(--blue-text); border-radius: 20px; padding: 1px 7px 1px 8px; }
+  .owner-pill button { border: none; background: none; cursor: pointer; color: var(--blue-text); font-size: 12px; padding: 0; line-height: 1; opacity: 0.6; font-family: inherit; }
+  .owner-pill button:hover { opacity: 1; }
+  .add-owner-btn { font-size: 11px; border: 0.5px dashed var(--border2); border-radius: 20px; background: none; color: var(--text3); cursor: pointer; padding: 1px 8px; font-family: inherit; }
+  .add-owner-btn:hover { color: var(--text); border-style: solid; }
+  .sm-select { font-size: 11px; border: 0.5px solid var(--border2); border-radius: var(--radius); padding: 2px 5px; background: var(--bg2); color: var(--text2); cursor: pointer; font-family: inherit; }
+  .mgr-pill { font-size: 11px; color: var(--text2); background: var(--bg2); border-radius: var(--radius); padding: 1px 7px; border: 0.5px solid var(--border); display: inline-flex; align-items: center; gap: 4px; }
+  .mgr-pill button { border: none; background: none; cursor: pointer; font-size: 12px; color: var(--text3); padding: 0; font-family: inherit; }
+  .td-actions { display: flex; gap: 3px; flex-shrink: 0; align-items: flex-start; padding-top: 1px; }
+
+  /* IDS */
+  .ids-card { border: 0.5px solid var(--border); border-radius: var(--radius); margin: 7px 0; }
+  .ids-card.solved { border-color: var(--green-border); background: var(--green-bg); }
+  .ids-card-header { display: flex; align-items: center; gap: 10px; padding: 11px 13px; cursor: pointer; }
+  .ids-card-header:hover { background: var(--bg2); border-radius: var(--radius); }
+  .ids-card.solved .ids-card-header:hover { background: rgba(0,0,0,0.03); }
+  .ids-name { flex: 1; font-weight: 600; font-size: 13px; color: var(--text); }
+  .ids-card.solved .ids-name { color: var(--green-text); }
+  .ids-status-sel { font-size: 11px; border: 0.5px solid var(--border); border-radius: 20px; padding: 2px 8px; background: var(--bg2); color: var(--text2); cursor: pointer; font-family: inherit; }
+  .ids-card.solved .ids-status-sel { border-color: var(--green-border); color: var(--green-text); background: var(--green-bg); }
+  .ids-body { border-top: 0.5px solid var(--border); padding: 6px 13px 13px; }
+  .ids-card.solved .ids-body { border-top-color: var(--green-border); }
+  .ids-notes { width: 100%; border: 0.5px solid var(--border); border-radius: var(--radius); padding: 8px 10px; font-size: 13px; background: var(--bg2); color: var(--text); resize: vertical; min-height: 72px; margin-top: 10px; font-family: inherit; }
+  .ids-notes:focus { outline: none; border-color: var(--teal-border); }
+  .ids-notes::placeholder { color: var(--text3); }
+  .sub-label { font-size: 10px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.07em; padding: 12px 0 5px; }
+  .linked-td-row { display: flex; align-items: center; gap: 8px; padding: 5px 0; font-size: 12px; color: var(--text2); border-bottom: 0.5px solid var(--border); }
+  .linked-td-row:last-of-type { border-bottom: none; }
+  .mini-form { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+  .mini-input { flex: 1; min-width: 120px; border: 0.5px solid var(--border); border-radius: var(--radius); padding: 5px 9px; font-size: 12px; background: var(--bg2); color: var(--text); font-family: inherit; }
+  .mini-input:focus { outline: none; border-color: var(--teal-border); }
+  .mini-input::placeholder { color: var(--text3); }
+  .mini-btn { border: 0.5px solid var(--border); border-radius: var(--radius); background: var(--bg); color: var(--text); cursor: pointer; padding: 5px 11px; font-size: 12px; font-family: inherit; }
+  .mini-btn:hover { background: var(--bg2); }
+  .solved-note { font-size: 11px; color: var(--green-text); padding: 0 13px 9px; font-style: italic; }
+
+  /* SETUP SCREEN */
+  .setup-screen { max-width: 560px; margin: 60px auto; background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 32px; box-shadow: var(--shadow); }
+  .setup-screen h1 { font-size: 22px; font-weight: 600; margin-bottom: 8px; }
+  .setup-screen p { font-size: 14px; color: var(--text2); line-height: 1.6; margin-bottom: 20px; }
+  .setup-field { margin-bottom: 14px; }
+  .setup-field label { display: block; font-size: 12px; font-weight: 600; color: var(--text2); margin-bottom: 5px; }
+  .setup-field input { width: 100%; border: 0.5px solid var(--border2); border-radius: var(--radius); padding: 9px 12px; font-size: 13px; background: var(--bg2); color: var(--text); font-family: inherit; }
+  .setup-field input:focus { outline: none; border-color: var(--teal-border); }
+  .setup-btn { width: 100%; border: none; border-radius: var(--radius); background: var(--teal-text); color: #fff; cursor: pointer; padding: 11px; font-size: 14px; font-weight: 600; font-family: inherit; margin-top: 8px; }
+  .setup-btn:hover { opacity: 0.9; }
+  .setup-error { font-size: 12px; color: var(--red-text); margin-top: 8px; background: var(--red-bg); padding: 8px 12px; border-radius: var(--radius); display: none; }
+
+  /* LOADING */
+  .loading-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 60vh; gap: 12px; }
+  .spinner { width: 28px; height: 28px; border: 2.5px solid var(--border2); border-top-color: var(--teal-text); border-radius: 50%; animation: spin 0.7s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-text { font-size: 13px; color: var(--text3); }
+
+  .empty-state { padding: 10px 0 4px; font-size: 13px; color: var(--text3); }
+
+  /* MODAL */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; z-index: 200; }
+  .modal { background: var(--bg); border-radius: var(--radius-lg); padding: 24px; max-width: 420px; width: 90%; box-shadow: 0 8px 32px rgba(0,0,0,0.18); }
+  .modal h3 { font-size: 16px; font-weight: 600; margin-bottom: 12px; }
+  .modal p { font-size: 13px; color: var(--text2); margin-bottom: 16px; line-height: 1.5; }
+  .modal-btns { display: flex; gap: 8px; justify-content: flex-end; }
+  .modal-cancel { border: 0.5px solid var(--border2); border-radius: var(--radius); background: var(--bg2); color: var(--text); cursor: pointer; padding: 7px 16px; font-size: 13px; font-family: inherit; }
+  .modal-confirm { border: none; border-radius: var(--radius); background: var(--teal-text); color: #fff; cursor: pointer; padding: 7px 16px; font-size: 13px; font-weight: 500; font-family: inherit; }
+</style>
+</head>
+<body>
+
+<div id="setup-screen" class="setup-screen" style="display:none">
+  <h1>Partners L10 Setup</h1>
+  <p>Enter your Airtable Personal Access Token to connect to OpsHub. This only needs to be done once per device — it will be saved in your browser.</p>
+  <div class="setup-field">
+    <label>Airtable Personal Access Token</label>
+    <input type="password" id="setup-token" placeholder="patXXXXX..." autocomplete="off">
+  </div>
+  <div class="setup-error" id="setup-error"></div>
+  <button class="setup-btn" id="setup-btn" onclick="saveToken()">Connect to OpsHub →</button>
+</div>
+
+<div id="loading-screen" class="loading-screen" style="display:none">
+  <div class="spinner"></div>
+  <div class="loading-text" id="loading-text">Loading…</div>
+</div>
+
+<div id="app" style="display:none">
+  <nav class="topnav">
+    <div class="logo">Partners <span>L10</span></div>
+    <div class="meeting-picker">
+      <select id="meeting-select" onchange="switchMeeting(this.value)"></select>
+      <button class="new-meeting-btn" onclick="createNewMeeting()">+ New meeting</button>
+    </div>
+    <div class="sync-indicator">
+      <div class="sync-dot" id="sync-dot"></div>
+      <span id="sync-label">Live</span>
+    </div>
+  </nav>
+
+  <div class="main">
+    <div class="meeting-header">
+      <div style="flex:1">
+        <div class="meeting-title" id="meeting-title">—</div>
+        <div class="meeting-meta" id="meeting-meta"></div>
+        <textarea class="meeting-notes-area" id="meeting-notes" placeholder="Meeting notes, agenda items, context…" rows="2" oninput="scheduleMeetingNotesSave()"></textarea>
+      </div>
+    </div>
+
+    <!-- HEADLINES -->
+    <div class="section" id="sec-headlines">
+      <div class="sec-header" onclick="toggleSection('headlines')">
+        <span class="sec-icon">📢</span>
+        <span class="sec-title">Headlines</span>
+        <span class="sec-count" id="hl-count">0</span>
+        <span class="chevron" id="chev-headlines">▾</span>
+      </div>
+      <div class="sec-body" id="body-headlines">
+        <div id="hl-list"></div>
+        <div class="add-area">
+          <div class="form-row">
+            <select class="f-select" id="hl-cat">
+              <option value="Customer">Customer</option>
+              <option value="Employee">Employee</option>
+              <option value="Sales Pipeline">Sales pipeline</option>
+              <option value="Manager Meeting Updates">Manager meeting updates</option>
+            </select>
+            <select class="f-select" id="hl-acct"><option value="">Account…</option></select>
+          </div>
+          <div class="form-row">
+            <input class="f-input" id="hl-input" placeholder="Add a headline…" onkeydown="if(event.key==='Enter')addHeadline()">
+            <button class="add-btn" id="hl-add-btn" onclick="addHeadline()">+ Add</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TO-DOS -->
+    <div class="section" id="sec-todos">
+      <div class="sec-header" onclick="toggleSection('todos')">
+        <span class="sec-icon">✅</span>
+        <span class="sec-title">To-do list</span>
+        <span class="sec-count" id="td-count">0 open</span>
+        <span class="chevron" id="chev-todos">▾</span>
+      </div>
+      <div class="sec-body" id="body-todos">
+        <div id="td-list"></div>
+        <div class="add-area">
+          <div class="form-row">
+            <select class="f-select" id="td-owner">
+              <option value="">Owner…</option>
+              <option>Aly</option><option>Chris</option><option>Matthew</option>
+              <option>Grayson</option><option>Andy</option><option>Virginia</option><option>Jorge</option>
+            </select>
+            <select class="f-select" id="td-acct"><option value="">Account…</option></select>
+          </div>
+          <div class="form-row">
+            <input class="f-input" id="td-input" placeholder="Add an action item…" onkeydown="if(event.key==='Enter')addTodo()">
+            <button class="add-btn" id="td-add-btn" onclick="addTodo()">+ Add</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- IDS -->
+    <div class="section" id="sec-ids">
+      <div class="sec-header" onclick="toggleSection('ids')">
+        <span class="sec-icon">💡</span>
+        <span class="sec-title">IDS — Identify, Discuss, Solve</span>
+        <span class="sec-count" id="ids-count">0 open</span>
+        <span class="chevron" id="chev-ids">▾</span>
+      </div>
+      <div class="sec-body" id="body-ids">
+        <div id="ids-list"></div>
+        <div class="add-area">
+          <div class="form-row">
+            <select class="f-select" id="ids-acct"><option value="">Account…</option></select>
+          </div>
+          <div class="form-row">
+            <input class="f-input" id="ids-input" placeholder="Add an issue to discuss…" onkeydown="if(event.key==='Enter')addIDS()">
+            <button class="add-btn" id="ids-add-btn" onclick="addIDS()">+ Add</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CONFIRM MODAL -->
+<div class="modal-overlay" id="confirm-modal" style="display:none">
+  <div class="modal">
+    <h3 id="modal-title">Confirm</h3>
+    <p id="modal-body"></p>
+    <div class="modal-btns">
+      <button class="modal-cancel" onclick="closeModal()">Cancel</button>
+      <button class="modal-confirm" id="modal-confirm-btn">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── CONFIG ───────────────────────────────────────────────────────────────────
+const BASE_ID = 'appJtQupUwW43NHMb';
+const ACCOUNTS_TABLE = 'tbl9ghnCY4Wh1CvXN';
+const TASKS_TABLE    = 'tbleKylnKpqyj7e7L';
+const OWNERS = ['Aly','Chris','Matthew','Grayson','Andy','Virginia','Jorge'];
+const CAT_ORDER = ['Customer','Employee','Sales Pipeline','Manager Meeting Updates'];
+
+// L10 table IDs (created 2026-06-23)
+let TABLES = {
+  meetings:  'tblNs7x5nS9CXd4ls',
+  headlines: 'tbl0aLHXma4tDbka1',
+  todos:     'tblKbIPhadxQTShjG',
+  ids:       'tbl2IlFkQxOzaDsZ3',
+};
+
+// ─── STATE ────────────────────────────────────────────────────────────────────
+let token = '';
+let currentMeetingId = null;
+let allMeetings = [];
+let headlines = [];
+let todos = [];
+let issues = [];
+let accounts = [];
+let managerTasks = [];
+let sectionCollapsed = { headlines: false, todos: false, ids: false };
+let saveTimers = {};
+let lastSyncTime = Date.now();
+let syncInterval = null;
+
+// ─── AIRTABLE API ─────────────────────────────────────────────────────────────
+async function atFetch(path, opts = {}) {
+  const url = path.startsWith('http') ? path : `https://api.airtable.com/v0/${path}`;
+  const res = await fetch(url, {
+    ...opts,
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json', ...(opts.headers || {}) }
+  });
+  if (!res.ok) { const e = await res.json(); throw new Error(e.error?.message || res.statusText); }
+  return res.json();
+}
+
+async function listRecords(tableId, opts = {}) {
+  let records = [], offset = null;
+  do {
+    const params = new URLSearchParams();
+    if (opts.fields) opts.fields.forEach(f => params.append('fields[]', f));
+    if (opts.filterByFormula) params.set('filterByFormula', opts.filterByFormula);
+    if (opts.sort) opts.sort.forEach((s,i) => { params.set(`sort[${i}][field]`, s.field); params.set(`sort[${i}][direction]`, s.dir || 'asc'); });
+    if (opts.maxRecords) params.set('maxRecords', opts.maxRecords);
+    if (offset) params.set('offset', offset);
+    const data = await atFetch(`${BASE_ID}/${tableId}?${params}`);
+    records = records.concat(data.records);
+    offset = data.offset;
+  } while (offset);
+  return records;
+}
+
+async function createRecord(tableId, fields) {
+  const data = await atFetch(`${BASE_ID}/${tableId}`, {
+    method: 'POST', body: JSON.stringify({ fields })
+  });
+  return data;
+}
+
+async function updateRecord(tableId, recordId, fields) {
+  return atFetch(`${BASE_ID}/${tableId}/${recordId}`, {
+    method: 'PATCH', body: JSON.stringify({ fields })
+  });
+}
+
+async function deleteRecord(tableId, recordId) {
+  return atFetch(`${BASE_ID}/${tableId}/${recordId}`, { method: 'DELETE' });
+}
+
+
+// ─── SETUP ────────────────────────────────────────────────────────────────────
+function showScreen(name) {
+  document.getElementById('setup-screen').style.display  = name === 'setup'   ? '' : 'none';
+  document.getElementById('loading-screen').style.display = name === 'loading' ? '' : 'none';
+  document.getElementById('app').style.display           = name === 'app'     ? '' : 'none';
+}
+
+async function saveToken() {
+  const t = document.getElementById('setup-token').value.trim();
+  if (!t) return;
+  token = t;
+  const btn = document.getElementById('setup-btn');
+  btn.textContent = 'Connecting…';
+  btn.disabled = true;
+  try {
+    await atFetch(`meta/bases/${BASE_ID}/tables`);
+    localStorage.setItem('l10_token', t);
+    document.getElementById('setup-error').style.display = 'none';
+    await initApp();
+  } catch(e) {
+    document.getElementById('setup-error').textContent = 'Could not connect: ' + e.message;
+    document.getElementById('setup-error').style.display = 'block';
+    btn.textContent = 'Connect to OpsHub →';
+    btn.disabled = false;
+    token = '';
+  }
+}
+
+async function initApp() {
+  showScreen('loading');
+  setLoading('Connecting to OpsHub…');
+  try {
+    setLoading('Loading accounts…');
+    await loadAccounts();
+    setLoading('Loading meetings…');
+    await loadMeetings();
+    populateAccountDropdowns();
+    showScreen('app');
+    startSyncLoop();
+  } catch(e) {
+    setLoading('Error: ' + e.message + ' — Please refresh.');
+  }
+}
+
+// Tables already created — no setup needed
+
+// ─── DATA LOADING ─────────────────────────────────────────────────────────────
+async function loadAccounts() {
+  const recs = await listRecords(ACCOUNTS_TABLE, {
+    fields: ['Account'],
+    sort: [{ field: 'Account' }]
+  });
+  accounts = recs.map(r => ({ id: r.id, name: r.fields['Account'] || '' })).filter(a => a.name);
+}
+
+async function loadMeetings() {
+  const recs = await listRecords(TABLES.meetings, {
+    sort: [{ field: 'Meeting Date', dir: 'desc' }]
+  });
+  allMeetings = recs.map(r => ({
+    id: r.id,
+    date: r.fields['Meeting Date'] || '',
+    notes: r.fields['Notes'] || ''
+  }));
+
+  const sel = document.getElementById('meeting-select');
+  sel.innerHTML = allMeetings.map(m => `<option value="${m.id}">${formatMeetingLabel(m)}</option>`).join('');
+
+  if (allMeetings.length > 0) {
+    currentMeetingId = allMeetings[0].id;
+    await loadMeetingData();
+  } else {
+    await createNewMeeting();
+  }
+}
+
+async function loadMeetingData() {
+  if (!currentMeetingId) return;
+  const meeting = allMeetings.find(m => m.id === currentMeetingId);
+  if (!meeting) return;
+
+  document.getElementById('meeting-title').textContent = formatMeetingTitle(meeting);
+  document.getElementById('meeting-meta').textContent = 'Partners Commercial Cleaning — Leadership L10';
+  document.getElementById('meeting-notes').value = meeting.notes || '';
+
+  const formula = `FIND("${currentMeetingId}", ARRAYJOIN({Meeting}))`;
+
+  const [hlRecs, tdRecs, idsRecs, mgrRecs] = await Promise.all([
+    listRecords(TABLES.headlines, { filterByFormula: formula }),
+    listRecords(TABLES.todos, { filterByFormula: formula }),
+    listRecords(TABLES.ids, { filterByFormula: formula }),
+    listRecords(TASKS_TABLE, {
+      fields: ['TaskName', 'Account Manager (from Account)', 'Status'],
+      filterByFormula: "OR({Status}='Not Acknowledged',{Status}='Acknowledged/In-Progress')",
+      maxRecords: 200
+    })
+  ]);
+
+  headlines = hlRecs.map(r => ({
+    id: r.id, text: r.fields['Headline'] || '',
+    cat: r.fields['Category'] || 'Customer',
+    acctIds: r.fields['Account'] || [], acctName: ''
+  }));
+  todos = tdRecs.map(r => ({
+    id: r.id, text: r.fields['Task'] || '',
+    owners: r.fields['Owners'] || [],
+    done: r.fields['Done'] || false,
+    acctIds: r.fields['Account'] || [], acctName: '',
+    idsIds: r.fields['IDS Issue'] || [],
+    mgrIds: r.fields['Manager Task'] || [], mgrName: '',
+    showOwnerSel: false
+  }));
+  issues = idsRecs.map(r => ({
+    id: r.id, title: r.fields['Issue'] || '',
+    notes: r.fields['Notes'] || '',
+    status: r.fields['Status'] || 'Open',
+    acctIds: r.fields['Account'] || [], acctName: '',
+    open: false
+  }));
+  managerTasks = mgrRecs.map(r => ({
+    id: r.id, name: r.fields['TaskName'] || '',
+    am: (r.fields['Account Manager (from Account)'] || []).join(', ')
+  }));
+
+  // Resolve account names
+  resolveAccountNames();
+  renderAll();
+}
+
+function resolveAccountNames() {
+  const map = {};
+  accounts.forEach(a => map[a.id] = a.name);
+  headlines.forEach(h => h.acctName = h.acctIds.length ? (map[h.acctIds[0]] || '') : '');
+  todos.forEach(t => {
+    t.acctName = t.acctIds.length ? (map[t.acctIds[0]] || '') : '';
+    if (t.mgrIds.length) {
+      const mt = managerTasks.find(m => m.id === t.mgrIds[0]);
+      t.mgrName = mt ? mt.name : '';
+    }
+  });
+  issues.forEach(i => i.acctName = i.acctIds.length ? (map[i.acctIds[0]] || '') : '');
+}
+
+// ─── MEETING MANAGEMENT ───────────────────────────────────────────────────────
+async function createNewMeeting() {
+  // Find next Sunday or next week
+  const today = new Date();
+  const dow = today.getDay();
+  const daysToNext = (7 - dow) % 7 || 7; // next Monday
+  const nextDate = new Date(today);
+  nextDate.setDate(today.getDate() + (dow === 1 ? 0 : daysToNext - 6));
+  const dateStr = nextDate.toISOString().split('T')[0];
+
+  setSyncing(true);
+  const rec = await createRecord(TABLES.meetings, { 'Meeting Date': dateStr, Notes: '' });
+  const newMeeting = { id: rec.id, date: dateStr, notes: '' };
+  allMeetings.unshift(newMeeting);
+  const sel = document.getElementById('meeting-select');
+  const opt = document.createElement('option');
+  opt.value = rec.id; opt.textContent = formatMeetingLabel(newMeeting); opt.selected = true;
+  sel.insertBefore(opt, sel.firstChild);
+  currentMeetingId = rec.id;
+  headlines = []; todos = []; issues = [];
+  renderAll();
+  document.getElementById('meeting-title').textContent = formatMeetingTitle(newMeeting);
+  document.getElementById('meeting-notes').value = '';
+  setSyncing(false);
+}
+
+async function switchMeeting(id) {
+  currentMeetingId = id;
+  showScreen('loading');
+  setLoading('Loading meeting…');
+  await loadMeetingData();
+  showScreen('app');
+}
+
+function formatMeetingLabel(m) {
+  if (!m.date) return 'New meeting';
+  const d = new Date(m.date + 'T12:00:00');
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+function formatMeetingTitle(m) {
+  if (!m.date) return 'Partners L10';
+  const d = new Date(m.date + 'T12:00:00');
+  return 'Partners L10 — ' + d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+}
+
+let meetingNotesTimer = null;
+function scheduleMeetingNotesSave() {
+  clearTimeout(meetingNotesTimer);
+  meetingNotesTimer = setTimeout(async () => {
+    const notes = document.getElementById('meeting-notes').value;
+    const meeting = allMeetings.find(m => m.id === currentMeetingId);
+    if (meeting) meeting.notes = notes;
+    setSyncing(true);
+    await updateRecord(TABLES.meetings, currentMeetingId, { Notes: notes }).catch(()=>{});
+    setSyncing(false);
+  }, 1500);
+}
+
+// ─── ACCOUNT DROPDOWNS ────────────────────────────────────────────────────────
+function populateAccountDropdowns() {
+  const opts = '<option value="">Account…</option>' + accounts.map(a => `<option value="${a.id}">${esc(a.name)}</option>`).join('');
+  ['hl-acct','td-acct','ids-acct'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = opts;
+  });
+}
+
+// ─── SECTION TOGGLE ───────────────────────────────────────────────────────────
+function toggleSection(key) {
+  sectionCollapsed[key] = !sectionCollapsed[key];
+  document.getElementById('body-' + key).classList.toggle('hidden', sectionCollapsed[key]);
+  document.getElementById('chev-' + key).classList.toggle('collapsed', sectionCollapsed[key]);
+}
+
+// ─── RENDER ALL ───────────────────────────────────────────────────────────────
+function renderAll() { renderHeadlines(); renderTodos(); renderIDS(); }
+
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function acctTag(name) {
+  if (!name) return '';
+  return `<span class="acct-tag">${esc(name)}</span>`;
+}
+
+// ─── HEADLINES ────────────────────────────────────────────────────────────────
+function renderHeadlines() {
+  const grp = {}; CAT_ORDER.forEach(c => grp[c] = []);
+  headlines.forEach(h => { (grp[h.cat] || (grp['Customer'])).push(h); });
+  let html = '';
+  CAT_ORDER.forEach(cat => {
+    if (!grp[cat].length) return;
+    html += `<div class="cat-label">${esc(cat)}</div>`;
+    grp[cat].forEach(h => {
+      html += `<div class="hl-row">
+        <div class="hl-dot"></div>
+        <div class="hl-main">
+          <div class="hl-text">${esc(h.text)}</div>
+          <div class="hl-meta">${acctTag(h.acctName)}</div>
+        </div>
+        <div class="hl-actions">
+          <button class="convert-btn" onclick="hlToTodo('${h.id}')">→ To-do</button>
+          <button class="convert-btn" onclick="hlToIDS('${h.id}')">→ IDS</button>
+          <button class="del-btn" onclick="confirmDelete('headline','${h.id}')" title="Delete">×</button>
+        </div>
+      </div>`;
+    });
+  });
+  if (!html) html = `<div class="empty-state">No headlines yet — add one below</div>`;
+  document.getElementById('hl-list').innerHTML = html;
+  document.getElementById('hl-count').textContent = headlines.length;
+}
+
+async function addHeadline() {
+  const inp = document.getElementById('hl-input');
+  const text = inp.value.trim(); if (!text) return;
+  const cat = document.getElementById('hl-cat').value;
+  const acctId = document.getElementById('hl-acct').value;
+  const acct = accounts.find(a => a.id === acctId);
+  setBtnSaving('hl-add-btn', true);
+  const fields = {
+    Headline: text, Category: cat,
+    Meeting: [currentMeetingId],
+    ...(acctId ? { Account: [acctId] } : {})
+  };
+  const rec = await createRecord(TABLES.headlines, fields).catch(e => { alert('Save failed: ' + e.message); return null; });
+  if (rec) {
+    headlines.push({ id: rec.id, text, cat, acctIds: acctId ? [acctId] : [], acctName: acct?.name || '' });
+    inp.value = '';
+  }
+  setBtnSaving('hl-add-btn', false);
+  renderHeadlines();
+}
+
+async function hlToTodo(id) {
+  const h = headlines.find(x => x.id === id); if (!h) return;
+  setSyncing(true);
+  const [rec] = await Promise.all([
+    createRecord(TABLES.todos, { Task: h.text, Done: false, Meeting: [currentMeetingId], ...(h.acctIds.length ? { Account: h.acctIds } : {}) }),
+    deleteRecord(TABLES.headlines, id)
+  ]);
+  headlines = headlines.filter(x => x.id !== id);
+  todos.push({ id: rec.id, text: h.text, owners: [], done: false, acctIds: h.acctIds, acctName: h.acctName, idsIds: [], mgrIds: [], mgrName: '', showOwnerSel: false });
+  setSyncing(false);
+  renderAll();
+}
+
+async function hlToIDS(id) {
+  const h = headlines.find(x => x.id === id); if (!h) return;
+  setSyncing(true);
+  const [rec] = await Promise.all([
+    createRecord(TABLES.ids, { Issue: h.text, Status: 'Open', Meeting: [currentMeetingId], ...(h.acctIds.length ? { Account: h.acctIds } : {}) }),
+    deleteRecord(TABLES.headlines, id)
+  ]);
+  headlines = headlines.filter(x => x.id !== id);
+  issues.push({ id: rec.id, title: h.text, notes: '', status: 'Open', acctIds: h.acctIds, acctName: h.acctName, open: true });
+  setSyncing(false);
+  renderAll();
+}
+
+// ─── TODOS ────────────────────────────────────────────────────────────────────
+function renderTodos() {
+  const byOwner = {}; const unassigned = [];
+  todos.forEach(t => {
+    if (!t.owners || !t.owners.length) { unassigned.push(t); return; }
+    t.owners.forEach(o => { if (!byOwner[o]) byOwner[o] = []; byOwner[o].push(t); });
+  });
+  const activeOwners = OWNERS.filter(o => byOwner[o] && byOwner[o].length);
+  let html = '';
+  activeOwners.forEach(owner => {
+    html += `<div class="grp-label">👤 ${esc(owner)}</div>`;
+    byOwner[owner].forEach(t => { html += todoRowHTML(t); });
+  });
+  if (unassigned.length) {
+    html += `<div class="grp-label">— Unassigned</div>`;
+    unassigned.forEach(t => { html += todoRowHTML(t); });
+  }
+  if (!html) html = `<div class="empty-state">No action items yet — add one below</div>`;
+  document.getElementById('td-list').innerHTML = html;
+  const open = todos.filter(t => !t.done).length;
+  document.getElementById('td-count').textContent = open + ' open';
+}
+
+function todoRowHTML(t) {
+  const avail = OWNERS.filter(o => !(t.owners||[]).includes(o));
+  const pills = (t.owners||[]).map(o =>
+    `<span class="owner-pill">${esc(o)}<button onclick="removeOwner('${t.id}','${o}')">×</button></span>`
+  ).join('');
+  const addBtn = avail.length ? `<button class="add-owner-btn" onclick="showOwnerSelect('${t.id}')">+ owner</button>` : '';
+  const osel = t.showOwnerSel ? `<select class="sm-select" id="osel-${t.id}" onchange="addOwner('${t.id}',this.value)"><option value="">Add…</option>${avail.map(o=>`<option>${esc(o)}</option>`).join('')}</select>` : '';
+  const mgrEl = t.mgrIds && t.mgrIds.length && t.mgrName
+    ? `<span class="mgr-pill">🔗 ${esc(t.mgrName)}<button onclick="unlinkMgrTask('${t.id}')">×</button></span>`
+    : `<select class="sm-select" onchange="linkMgrTask('${t.id}',this.value)"><option value="">Link mgr task…</option>${managerTasks.slice(0,30).map(m=>`<option value="${m.id}">${esc(m.name.substring(0,50))}</option>`).join('')}</select>`;
+  return `<div class="td-row">
+    <input type="checkbox" class="td-cb" ${t.done?'checked':''} onchange="toggleTodo('${t.id}')" aria-label="Mark complete">
+    <div class="td-main">
+      <div class="td-name${t.done?' done':''}">${esc(t.text)}</div>
+      <div class="td-meta">${pills}${addBtn}${osel}${acctTag(t.acctName)}${mgrEl}</div>
+    </div>
+    <div class="td-actions">
+      <button class="convert-btn" onclick="tdToIDS('${t.id}')">→ IDS</button>
+      <button class="del-btn" onclick="confirmDelete('todo','${t.id}')" title="Delete">×</button>
+    </div>
+  </div>`;
+}
+
+async function addTodo() {
+  const inp = document.getElementById('td-input');
+  const text = inp.value.trim(); if (!text) return;
+  const owner = document.getElementById('td-owner').value;
+  const acctId = document.getElementById('td-acct').value;
+  const acct = accounts.find(a => a.id === acctId);
+  setBtnSaving('td-add-btn', true);
+  const fields = {
+    Task: text, Done: false,
+    ...(owner ? { Owners: [owner] } : {}),
+    Meeting: [currentMeetingId],
+    ...(acctId ? { Account: [acctId] } : {})
+  };
+  const rec = await createRecord(TABLES.todos, fields).catch(e => { alert('Save failed: ' + e.message); return null; });
+  if (rec) {
+    todos.push({ id: rec.id, text, owners: owner ? [owner] : [], done: false, acctIds: acctId ? [acctId] : [], acctName: acct?.name || '', idsIds: [], mgrIds: [], mgrName: '', showOwnerSel: false });
+    inp.value = '';
+  }
+  setBtnSaving('td-add-btn', false);
+  renderTodos();
+}
+
+async function toggleTodo(id) {
+  const t = todos.find(x => x.id === id); if (!t) return;
+  t.done = !t.done;
+  renderTodos(); renderIDS();
+  await updateRecord(TABLES.todos, id, { Done: t.done }).catch(()=>{});
+}
+
+async function addOwner(id, owner) {
+  if (!owner) return;
+  const t = todos.find(x => x.id === id); if (!t) return;
+  if (!t.owners.includes(owner)) { t.owners.push(owner); }
+  t.showOwnerSel = false;
+  renderTodos();
+  await updateRecord(TABLES.todos, id, { Owners: t.owners }).catch(()=>{});
+}
+
+async function removeOwner(id, owner) {
+  const t = todos.find(x => x.id === id); if (!t) return;
+  t.owners = t.owners.filter(o => o !== owner);
+  renderTodos();
+  await updateRecord(TABLES.todos, id, { Owners: t.owners }).catch(()=>{});
+}
+
+function showOwnerSelect(id) {
+  const t = todos.find(x => x.id === id); if (!t) return;
+  t.showOwnerSel = true; renderTodos();
+  setTimeout(() => { const el = document.getElementById('osel-' + id); if (el) el.focus(); }, 40);
+}
+
+async function linkMgrTask(todoId, mgrId) {
+  if (!mgrId) return;
+  const t = todos.find(x => x.id === todoId); if (!t) return;
+  const mgr = managerTasks.find(m => m.id === mgrId);
+  t.mgrIds = [mgrId]; t.mgrName = mgr?.name || '';
+  renderTodos();
+  await updateRecord(TABLES.todos, todoId, { 'Manager Task': [mgrId] }).catch(()=>{});
+}
+
+async function unlinkMgrTask(todoId) {
+  const t = todos.find(x => x.id === todoId); if (!t) return;
+  t.mgrIds = []; t.mgrName = '';
+  renderTodos();
+  await updateRecord(TABLES.todos, todoId, { 'Manager Task': [] }).catch(()=>{});
+}
+
+async function tdToIDS(id) {
+  const t = todos.find(x => x.id === id); if (!t) return;
+  setSyncing(true);
+  const [rec] = await Promise.all([
+    createRecord(TABLES.ids, { Issue: t.text, Status: 'Open', Meeting: [currentMeetingId], ...(t.acctIds.length ? { Account: t.acctIds } : {}) }),
+    deleteRecord(TABLES.todos, id)
+  ]);
+  todos = todos.filter(x => x.id !== id);
+  issues.push({ id: rec.id, title: t.text, notes: '', status: 'Open', acctIds: t.acctIds, acctName: t.acctName, open: true });
+  setSyncing(false);
+  renderAll();
+}
+
+// ─── IDS ──────────────────────────────────────────────────────────────────────
+function renderIDS() {
+  let html = '';
+  issues.forEach(issue => {
+    const solved = issue.status === 'Solved';
+    const linkedTodos = todos.filter(t => t.idsIds && t.idsIds.includes(issue.id));
+    html += `<div class="ids-card${solved?' solved':''}">
+      <div class="ids-card-header" onclick="toggleIDS('${issue.id}')">
+        <span style="color:var(--text3);font-size:13px">${issue.open ? '▾' : '▸'}</span>
+        <span class="ids-name">${esc(issue.title)}</span>
+        ${acctTag(issue.acctName)}
+        <select class="ids-status-sel" onchange="changeIdsStatus('${issue.id}',this.value)" onclick="event.stopPropagation()">
+          ${['Open','In Discussion','Solved','Dropped'].map(s=>`<option value="${s}"${issue.status===s?' selected':''}>${s}${s==='Solved'?' ✓':''}</option>`).join('')}
+        </select>
+        <button class="del-btn" onclick="event.stopPropagation();confirmDelete('ids','${issue.id}')" title="Delete">×</button>
+      </div>
+      ${solved ? `<div class="solved-note">Solved — will be archived after this meeting</div>` : ''}
+      ${issue.open && !solved ? `<div class="ids-body">
+        <textarea class="ids-notes" placeholder="Notes, context, background for this issue…"
+          onchange="scheduleIdsNotesSave('${issue.id}',this.value)">${esc(issue.notes)}</textarea>
+        ${linkedTodos.length ? `<div class="sub-label">Action items from this discussion</div>
+          <div>${linkedTodos.map(t => `<div class="linked-td-row">
+            <input type="checkbox" class="td-cb" style="width:13px;height:13px" ${t.done?'checked':''} onchange="toggleTodo('${t.id}')" aria-label="Done">
+            <span style="${t.done?'text-decoration:line-through;color:var(--text3)':'color:var(--text)'};font-size:12px">${esc(t.text)}</span>
+            ${(t.owners||[]).map(o=>`<span class="owner-pill" style="font-size:10px;padding:1px 6px">${esc(o)}</span>`).join('')}
+            ${acctTag(t.acctName)}
+          </div>`).join('')}</div>` : ''}
+        <div class="sub-label">Create action item</div>
+        <div class="mini-form">
+          <input class="mini-input" id="ids-ai-text-${issue.id}" placeholder="Action item…" onkeydown="if(event.key==='Enter')createIdsAction('${issue.id}')">
+          <select class="sm-select" id="ids-ai-own-${issue.id}" style="padding:5px 6px">
+            <option value="">Owner…</option>${OWNERS.map(o=>`<option>${esc(o)}</option>`).join('')}
+          </select>
+          <button class="mini-btn" onclick="createIdsAction('${issue.id}')">+ Add to to-dos</button>
+        </div>
+      </div>` : ''}
+    </div>`;
+  });
+  if (!html) html = `<div class="empty-state">No issues yet — add one below</div>`;
+  document.getElementById('ids-list').innerHTML = html;
+  const open = issues.filter(i => i.status !== 'Solved' && i.status !== 'Dropped').length;
+  document.getElementById('ids-count').textContent = open + ' open';
+}
+
+async function addIDS() {
+  const inp = document.getElementById('ids-input');
+  const text = inp.value.trim(); if (!text) return;
+  const acctId = document.getElementById('ids-acct').value;
+  const acct = accounts.find(a => a.id === acctId);
+  setBtnSaving('ids-add-btn', true);
+  const fields = { Issue: text, Status: 'Open', Meeting: [currentMeetingId], ...(acctId ? { Account: [acctId] } : {}) };
+  const rec = await createRecord(TABLES.ids, fields).catch(e => { alert('Save failed: ' + e.message); return null; });
+  if (rec) {
+    issues.push({ id: rec.id, title: text, notes: '', status: 'Open', acctIds: acctId ? [acctId] : [], acctName: acct?.name || '', open: true });
+    inp.value = '';
+  }
+  setBtnSaving('ids-add-btn', false);
+  renderIDS();
+}
+
+function toggleIDS(id) {
+  const i = issues.find(x => x.id === id); if (i) i.open = !i.open;
+  renderIDS();
+}
+
+async function changeIdsStatus(id, status) {
+  const i = issues.find(x => x.id === id); if (!i) return;
+  i.status = status;
+  if (status === 'Solved' || status === 'Dropped') i.open = false;
+  renderIDS();
+  await updateRecord(TABLES.ids, id, { Status: status }).catch(()=>{});
+}
+
+const idsNotesTimers = {};
+function scheduleIdsNotesSave(id, notes) {
+  const i = issues.find(x => x.id === id); if (i) i.notes = notes;
+  clearTimeout(idsNotesTimers[id]);
+  idsNotesTimers[id] = setTimeout(async () => {
+    await updateRecord(TABLES.ids, id, { Notes: notes }).catch(()=>{});
+  }, 1500);
+}
+
+async function createIdsAction(idsId) {
+  const inp = document.getElementById('ids-ai-text-' + idsId);
+  const ownEl = document.getElementById('ids-ai-own-' + idsId);
+  const text = inp.value.trim(); if (!text) return;
+  const owner = ownEl.value;
+  const issue = issues.find(x => x.id === idsId);
+  const fields = {
+    Task: text, Done: false,
+    Meeting: [currentMeetingId],
+    'IDS Issue': [idsId],
+    ...(owner ? { Owners: [owner] } : {}),
+    ...(issue?.acctIds?.length ? { Account: issue.acctIds } : {})
+  };
+  setSyncing(true);
+  const rec = await createRecord(TABLES.todos, fields).catch(e => { alert('Save failed: ' + e.message); return null; });
+  if (rec) {
+    todos.push({ id: rec.id, text, owners: owner ? [owner] : [], done: false, acctIds: issue?.acctIds || [], acctName: issue?.acctName || '', idsIds: [idsId], mgrIds: [], mgrName: '', showOwnerSel: false });
+    inp.value = ''; ownEl.value = '';
+  }
+  setSyncing(false);
+  renderAll();
+}
+
+// ─── DELETE ───────────────────────────────────────────────────────────────────
+let pendingDelete = null;
+function confirmDelete(type, id) {
+  pendingDelete = { type, id };
+  const labels = { headline: 'Delete this headline?', todo: 'Delete this action item?', ids: 'Delete this IDS issue?' };
+  document.getElementById('modal-title').textContent = labels[type] || 'Delete?';
+  document.getElementById('modal-body').textContent = 'This cannot be undone.';
+  document.getElementById('modal-confirm-btn').onclick = executeDelete;
+  document.getElementById('confirm-modal').style.display = 'flex';
+}
+function closeModal() { document.getElementById('confirm-modal').style.display = 'none'; pendingDelete = null; }
+async function executeDelete() {
+  closeModal();
+  if (!pendingDelete) return;
+  const { type, id } = pendingDelete;
+  setSyncing(true);
+  if (type === 'headline') { await deleteRecord(TABLES.headlines, id).catch(()=>{}); headlines = headlines.filter(x => x.id !== id); renderHeadlines(); }
+  if (type === 'todo') { await deleteRecord(TABLES.todos, id).catch(()=>{}); todos = todos.filter(x => x.id !== id); renderTodos(); renderIDS(); }
+  if (type === 'ids') { await deleteRecord(TABLES.ids, id).catch(()=>{}); issues = issues.filter(x => x.id !== id); renderIDS(); }
+  setSyncing(false);
+}
+
+// ─── SYNC LOOP ────────────────────────────────────────────────────────────────
+function startSyncLoop() {
+  clearInterval(syncInterval);
+  syncInterval = setInterval(async () => {
+    if (!currentMeetingId) return;
+    await loadMeetingData().catch(()=>{});
+  }, 15000);
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) loadMeetingData().catch(()=>{});
+  });
+}
+
+function setSyncing(active) {
+  const dot = document.getElementById('sync-dot');
+  const lbl = document.getElementById('sync-label');
+  if (active) { dot.className = 'sync-dot syncing'; lbl.textContent = 'Saving…'; }
+  else { dot.className = 'sync-dot'; lbl.textContent = 'Live'; }
+}
+
+function setBtnSaving(btnId, saving) {
+  const btn = document.getElementById(btnId);
+  if (!btn) return;
+  if (saving) { btn.textContent = 'Saving…'; btn.classList.add('saving-btn'); }
+  else { btn.textContent = '+ Add'; btn.classList.remove('saving-btn'); }
+}
+
+function setLoading(msg) { document.getElementById('loading-text').textContent = msg; }
+
+// ─── BOOT ─────────────────────────────────────────────────────────────────────
+(async function boot() {
+  token = localStorage.getItem('l10_token') || '';
+  if (!token) { showScreen('setup'); return; }
+  await initApp();
+})();
+</script>
+</body>
+</html>
