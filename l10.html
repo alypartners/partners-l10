@@ -465,12 +465,12 @@ async function loadMeetingData() {
   document.getElementById('meeting-meta').textContent = 'Partners Commercial Cleaning — Leadership L10';
   document.getElementById('meeting-notes').value = meeting.notes || '';
 
-  const formula = `FIND("${currentMeetingId}", ARRAYJOIN({Meeting}))`;
-
+  // Fetch all records, filter client-side by meeting ID
+  // (ARRAYJOIN on linked fields returns names not IDs, so formula filter fails)
   const [hlRecs, tdRecs, idsRecs, mgrRecs] = await Promise.all([
-    listRecords(TABLES.headlines, { filterByFormula: formula }),
-    listRecords(TABLES.todos, { filterByFormula: formula }),
-    listRecords(TABLES.ids, { filterByFormula: formula }),
+    listRecords(TABLES.headlines),
+    listRecords(TABLES.todos),
+    listRecords(TABLES.ids),
     listRecords(TASKS_TABLE, {
       fields: ['TaskName', 'Account Manager (from Account)', 'Status'],
       filterByFormula: "OR({Status}='Not Acknowledged',{Status}='Acknowledged/In-Progress')",
@@ -478,12 +478,14 @@ async function loadMeetingData() {
     })
   ]);
 
-  headlines = hlRecs.map(r => ({
+  const inMeeting = r => (r.fields['Meeting'] || []).includes(currentMeetingId);
+
+  headlines = hlRecs.filter(inMeeting).map(r => ({
     id: r.id, text: r.fields['Headline'] || '',
     cat: r.fields['Category'] || 'Customer',
     acctIds: r.fields['Account'] || [], acctName: ''
   }));
-  todos = tdRecs.map(r => ({
+  todos = tdRecs.filter(inMeeting).map(r => ({
     id: r.id, text: r.fields['Task'] || '',
     owners: r.fields['Owners'] || [],
     done: r.fields['Done'] || false,
@@ -492,7 +494,7 @@ async function loadMeetingData() {
     mgrIds: r.fields['Manager Task'] || [], mgrName: '',
     showOwnerSel: false
   }));
-  issues = idsRecs.map(r => ({
+  issues = idsRecs.filter(inMeeting).map(r => ({
     id: r.id, title: r.fields['Issue'] || '',
     notes: r.fields['Notes'] || '',
     status: r.fields['Status'] || 'Open',
