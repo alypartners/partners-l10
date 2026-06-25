@@ -526,15 +526,24 @@ function resolveAccountNames() {
 }
 
 // ─── MEETING MANAGEMENT ───────────────────────────────────────────────────────
-async function createNewMeeting() {
-  // Find next Sunday or next week
-  const today = new Date();
-  const dow = today.getDay();
-  const daysToNext = (7 - dow) % 7 || 7; // next Monday
-  const nextDate = new Date(today);
-  nextDate.setDate(today.getDate() + (dow === 1 ? 0 : daysToNext - 6));
-  const dateStr = nextDate.toISOString().split('T')[0];
+function createNewMeeting() {
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('modal-title').textContent = 'New meeting';
+  document.getElementById('modal-body').innerHTML =
+    `<label style="font-size:12px;font-weight:600;color:var(--text2);display:block;margin-bottom:6px">Meeting date</label>
+     <input type="date" id="new-meeting-date" value="${today}" style="width:100%;border:0.5px solid var(--border2);border-radius:var(--radius);padding:8px 10px;font-size:14px;background:var(--bg2);color:var(--text);font-family:inherit">
+     <p style="font-size:12px;color:var(--text3);margin-top:10px">Open to-dos and unresolved IDS issues will carry over from the current meeting.</p>`;
+  document.getElementById('modal-confirm-btn').textContent = 'Create meeting';
+  document.getElementById('modal-confirm-btn').onclick = executeCreateMeeting;
+  document.getElementById('confirm-modal').style.display = 'flex';
+}
 
+async function executeCreateMeeting() {
+  const dateInput = document.getElementById('new-meeting-date');
+  const dateStr = dateInput ? dateInput.value : new Date().toISOString().split('T')[0];
+  closeModal();
+  const openTodos = todos.filter(t => !t.done);
+  const openIssues = issues.filter(i => i.status !== 'Solved' && i.status !== 'Dropped');
   setSyncing(true);
   const rec = await createRecord(TABLES.meetings, { 'Meeting Date': dateStr, Notes: '' });
   const newMeeting = { id: rec.id, date: dateStr, notes: '' };
@@ -545,6 +554,17 @@ async function createNewMeeting() {
   sel.insertBefore(opt, sel.firstChild);
   currentMeetingId = rec.id;
   headlines = []; todos = []; issues = [];
+  await Promise.all(openTodos.map(async t => {
+    const fields = { Task: t.text, Done: false, Meeting: [rec.id], ...(t.owners.length ? { Owners: t.owners } : {}), ...(t.acctIds.length ? { Account: t.acctIds } : {}), ...(t.mgrIds.length ? { 'Manager Task': t.mgrIds } : {}) };
+    const newRec = await createRecord(TABLES.todos, fields);
+    todos.push({ id: newRec.id, text: t.text, owners: t.owners, done: false, acctIds: t.acctIds, acctName: t.acctName, idsIds: [], mgrIds: t.mgrIds, mgrName: t.mgrName, showOwnerSel: false });
+  }));
+  await Promise.all(openIssues.map(async i => {
+    const fields = { Issue: i.title, Notes: i.notes, Status: i.status, Meeting: [rec.id], ...(i.acctIds.length ? { Account: i.acctIds } : {}) };
+    const newRec = await createRecord(TABLES.ids, fields);
+    issues.push({ id: newRec.id, title: i.title, notes: i.notes, status: i.status, acctIds: i.acctIds, acctName: i.acctName, open: false });
+  }));
+  resolveAccountNames();
   renderAll();
   document.getElementById('meeting-title').textContent = formatMeetingTitle(newMeeting);
   document.getElementById('meeting-notes').value = '';
@@ -925,7 +945,12 @@ function confirmDelete(type, id) {
   document.getElementById('modal-confirm-btn').onclick = executeDelete;
   document.getElementById('confirm-modal').style.display = 'flex';
 }
-function closeModal() { document.getElementById('confirm-modal').style.display = 'none'; pendingDelete = null; }
+function closeModal() {
+  document.getElementById('confirm-modal').style.display = 'none';
+  pendingDelete = null;
+  document.getElementById('modal-confirm-btn').textContent = 'Confirm';
+  document.getElementById('modal-confirm-btn').onclick = executeDelete;
+}
 async function executeDelete() {
   closeModal();
   if (!pendingDelete) return;
