@@ -451,7 +451,11 @@ async function loadMeetings() {
   sel.innerHTML = allMeetings.map(m => `<option value="${m.id}">${formatMeetingLabel(m)}</option>`).join('');
 
   if (allMeetings.length > 0) {
-    currentMeetingId = allMeetings[0].id;
+    const saved = localStorage.getItem('l10_meeting');
+    const found = saved && allMeetings.find(m => m.id === saved);
+    currentMeetingId = found ? saved : allMeetings[0].id;
+    const sel = document.getElementById('meeting-select');
+    if (sel) sel.value = currentMeetingId;
     await loadMeetingData();
   } else {
     await createNewMeeting();
@@ -555,6 +559,7 @@ async function executeCreateMeeting() {
   opt.value = rec.id; opt.textContent = formatMeetingLabel(nm); opt.selected = true;
   sel.insertBefore(opt, sel.firstChild);
   currentMeetingId = rec.id;
+  localStorage.setItem('l10_meeting', rec.id);
   headlines = []; todos = []; issues = [];
   await Promise.all(openTodos.map(async t => {
     const f = { Task: t.text, Done: false, Meeting: [rec.id], ...(t.owners.length ? { Owners: t.owners } : {}), ...(t.acctIds.length ? { Account: t.acctIds } : {}), ...(t.mgrIds.length ? { 'Manager Task': t.mgrIds } : {}) };
@@ -574,6 +579,7 @@ async function executeCreateMeeting() {
 
 async function switchMeeting(id) {
   currentMeetingId = id;
+  localStorage.setItem('l10_meeting', id);
   showScreen('loading');
   setLoading('Loading meeting…');
   await loadMeetingData();
@@ -955,9 +961,10 @@ function closeModal() {
   btn.onclick = executeDelete;
 }
 async function executeDelete() {
+  const pending = pendingDelete;
   closeModal();
-  if (!pendingDelete) return;
-  const { type, id } = pendingDelete;
+  if (!pending) return;
+  const { type, id } = pending;
   setSyncing(true);
   if (type === 'headline') { await deleteRecord(TABLES.headlines, id).catch(()=>{}); headlines = headlines.filter(x => x.id !== id); renderHeadlines(); }
   if (type === 'todo') { await deleteRecord(TABLES.todos, id).catch(()=>{}); todos = todos.filter(x => x.id !== id); renderTodos(); renderIDS(); }
