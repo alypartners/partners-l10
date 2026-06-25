@@ -198,6 +198,7 @@
     <div class="meeting-picker">
       <select id="meeting-select" onchange="switchMeeting(this.value)"></select>
       <button class="new-meeting-btn" onclick="createNewMeeting()">+ New meeting</button>
+      <button class="new-meeting-btn" id="del-meeting-btn" onclick="confirmDeleteMeeting()" style="background:var(--red-bg);color:var(--red-text);border-color:var(--red-text);display:none">Delete meeting</button>
     </div>
     <div class="sync-indicator">
       <div class="sync-dot" id="sync-dot"></div>
@@ -418,6 +419,7 @@ async function initApp() {
     await loadMeetings();
     populateAccountDropdowns();
     showScreen('app');
+    updateDeleteBtn();
     startSyncLoop();
   } catch(e) {
     setLoading('Error: ' + e.message + ' — Please refresh.');
@@ -947,8 +949,10 @@ function confirmDelete(type, id) {
 function closeModal() {
   document.getElementById('confirm-modal').style.display = 'none';
   pendingDelete = null;
-  document.getElementById('modal-confirm-btn').textContent = 'Confirm';
-  document.getElementById('modal-confirm-btn').onclick = executeDelete;
+  const btn = document.getElementById('modal-confirm-btn');
+  btn.textContent = 'Confirm';
+  btn.style.background = '';
+  btn.onclick = executeDelete;
 }
 async function executeDelete() {
   closeModal();
@@ -988,6 +992,40 @@ function setBtnSaving(btnId, saving) {
 }
 
 function setLoading(msg) { document.getElementById('loading-text').textContent = msg; }
+
+// ─── DELETE MEETING ──────────────────────────────────────────────────────────
+function confirmDeleteMeeting() {
+  if (allMeetings.length <= 1) return;
+  const m = allMeetings.find(x => x.id === currentMeetingId);
+  document.getElementById('modal-title').textContent = 'Delete this meeting?';
+  document.getElementById('modal-body').innerHTML = '<span style="color:var(--text2)">This will remove <strong>' + formatMeetingLabel(m) + '</strong> from the agenda history. Headlines, to-dos, and IDS items linked to it will <strong>not</strong> be deleted.</span>';
+  document.getElementById('modal-confirm-btn').textContent = 'Delete meeting';
+  document.getElementById('modal-confirm-btn').style.background = 'var(--red-text)';
+  document.getElementById('modal-confirm-btn').onclick = executeDeleteMeeting;
+  document.getElementById('confirm-modal').style.display = 'flex';
+}
+
+async function executeDeleteMeeting() {
+  closeModal();
+  setSyncing(true);
+  await deleteRecord(TABLES.meetings, currentMeetingId).catch(() => {});
+  allMeetings = allMeetings.filter(m => m.id !== currentMeetingId);
+  const sel = document.getElementById('meeting-select');
+  const optToRemove = sel.querySelector('option[value="' + currentMeetingId + '"]');
+  if (optToRemove) optToRemove.remove();
+  currentMeetingId = allMeetings.length ? allMeetings[0].id : null;
+  if (currentMeetingId) {
+    sel.value = currentMeetingId;
+    await loadMeetingData();
+  }
+  updateDeleteBtn();
+  setSyncing(false);
+}
+
+function updateDeleteBtn() {
+  const btn = document.getElementById('del-meeting-btn');
+  if (btn) btn.style.display = allMeetings.length > 1 ? '' : 'none';
+}
 
 // ─── BOOT ─────────────────────────────────────────────────────────────────────
 (async function boot() {
