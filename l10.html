@@ -447,7 +447,7 @@ async function loadManagers() {
     off = d.offset;
   } while (off);
   managers = recs
-    .filter(r => r.fields['Status'] === 'Active')
+    .filter(r => r.fields['Status'] === 'Active' && ['Jorge Fernandez','Sergio Fernandez','Julian Gonzalez','Nelson Leon','Victor Lopez','Cooper Smith'].includes(r.fields['Name']))
     .map(r => ({ id: r.id, name: r.fields['Name'] || '', acctIds: r.fields['Accounts 2'] || [] }))
     .sort((a, b) => a.name.localeCompare(b.name));
 }
@@ -735,9 +735,10 @@ function renderTodos() {
   });
   const activeOwners = OWNERS.filter(o => byOwner[o] && byOwner[o].length);
   let html = '';
-  activeOwners.forEach(owner => {
-    html += `<div class="grp-label">👤 ${esc(owner)}</div>`;
-    byOwner[owner].forEach(t => { html += todoRowHTML(t); });
+  activeOwners.forEach((owner, gi) => {
+    const gBg = gi % 2 !== 0 ? 'var(--bg2)' : 'transparent';
+    html += `<div class="grp-label" style="background:${gBg};padding-left:6px;padding-right:6px;">👤 ${esc(owner)}</div>`;
+    byOwner[owner].forEach(t => { html += todoRowHTML(t, gBg); });
   });
   if (unassigned.length) {
     html += `<div class="grp-label">— Unassigned</div>`;
@@ -749,7 +750,8 @@ function renderTodos() {
   document.getElementById('td-count').textContent = open + ' open';
 }
 
-function todoRowHTML(t) {
+function todoRowHTML(t, bg) {
+  bg = bg || 'transparent';
   const avail = OWNERS.filter(o => !(t.owners||[]).includes(o));
   const pills = (t.owners||[]).map(o =>
     `<span class="owner-pill">${esc(o)}<button onclick="removeOwner('${t.id}','${o}')">×</button></span>`
@@ -760,7 +762,7 @@ function todoRowHTML(t) {
     ? `<span class="mgr-pill">🔗 ${esc(t.mgrName)}<button onclick="unlinkMgrTask('${t.id}')">×</button></span>`
     : `<select class="sm-select" onchange="linkMgrTask('${t.id}',this.value)"><option value="">Link mgr task…</option>${managerTasks.slice(0,30).map(m=>`<option value="${m.id}">${esc(m.name.substring(0,50))}</option>`).join('')}</select>`;
   const mgrEl = linkedMgr + `<button class="add-owner-btn" onclick="openMgrTaskModal('${t.id}')" style="border-color:var(--amber-text);color:var(--amber-text)">+ mgr task</button>`;
-  return `<div class="td-row">
+  return `<div class="td-row" style="background:${bg}">
     <input type="checkbox" class="td-cb" ${t.done?'checked':''} onchange="toggleTodo('${t.id}')" aria-label="Mark complete">
     <div class="td-main">
       <div class="td-name${t.done?' done':''}">${esc(t.text)}</div>
